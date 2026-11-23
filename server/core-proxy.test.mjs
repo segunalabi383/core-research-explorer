@@ -110,6 +110,44 @@ describe('API server', () => {
     }
   });
 
+  it('cleans a pasted key of line breaks, invisible characters and quotes', async () => {
+    const core = fakeCore();
+    const app = await startServer({ apiKey: '"secret\n-key​"\r\n', fetchImpl: core.fetchImpl });
+    try {
+      assert.equal((await fetch(`${app.base}/api/search?q=drone`)).status, 200);
+      assert.equal(core.calls[0].init.headers.authorization, 'Bearer secret-key');
+      assert.deepEqual(await (await fetch(`${app.base}/api/health`)).json(), { status: 'ok', keyConfigured: true });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('reports a key that still cannot be sent, at /api/health and in the log', async () => {
+    const logs = [];
+    const app = await startServer({ apiKey: 'sécret', fetchImpl: fakeCore().fetchImpl, log: (m) => logs.push(m) });
+    try {
+      const health = await (await fetch(`${app.base}/api/health`)).json();
+      assert.match(health.keyProblem, /CORE_API_KEY contains characters/);
+      assert.match(logs[0], /CORE_API_KEY contains characters/);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('logs the underlying reason when CORE cannot be reached', async () => {
+    const logs = [];
+    const fetchImpl = async () => {
+      throw new TypeError('fetch failed', { cause: Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }) });
+    };
+    const app = await startServer({ fetchImpl, log: (m) => logs.push(m) });
+    try {
+      assert.equal((await fetch(`${app.base}/api/search?q=drone`)).status, 502);
+      assert.equal(logs[0], 'CORE request failed: fetch failed (ECONNRESET)');
+    } finally {
+      await app.close();
+    }
+  });
+
   it('asks CORE for year counts across the whole query', async () => {
     const core = fakeCore(() => ({ status: 200, body: { aggregations: { yearPublished: { 2020: 3 } } } }));
     const app = await startServer({ fetchImpl: core.fetchImpl });

@@ -105,6 +105,22 @@ export function createRateLimiter({ max, windowMs, now = Date.now }) {
 }
 
 /**
+ * API keys never contain spaces, line breaks or invisible characters, but pasting one into a
+ * hosting dashboard easily adds them, and fetch refuses to send such a header at all.
+ * Removes them, and any quotes around the whole key.
+ */
+export function cleanApiKey(raw = '') {
+  return raw.replace(/[\s​-‍⁠﻿]/g, '').replace(/^(['"])(.*)\1$/, '$2');
+}
+
+/** Why a cleaned key still can't be sent as a header, or null if it can. */
+export function apiKeyProblem(key) {
+  return key && !/^[\x21-\x7e]+$/.test(key)
+    ? 'CORE_API_KEY contains characters that cannot be sent to CORE. Copy the key again from CORE.'
+    : null;
+}
+
+/**
  * Builds the request handler. Everything it talks to is injectable so tests never hit the network.
  */
 export function createHandler({
@@ -119,7 +135,9 @@ export function createHandler({
   now = Date.now,
   log = () => {},
 } = {}) {
-  const key = apiKey.trim();
+  const key = cleanApiKey(apiKey);
+  const keyProblem = apiKeyProblem(key);
+  if (keyProblem) log(keyProblem);
   const cache = new Map();
   const inFlight = new Map();
   const limiter = createRateLimiter({ ...rateLimit, now });
@@ -138,7 +156,9 @@ export function createHandler({
         upstream = await fetchImpl(url, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
       } catch (error) {
         const timedOut = error?.name === 'TimeoutError' || error?.name === 'AbortError';
-        log(`CORE request failed: ${error?.message ?? error}`);
+        // fetch reports network failures as "fetch failed"; the real reason is in its cause.
+        const cause = error?.cause ? ` (${error.cause.code ?? error.cause.message ?? error.cause})` : '';
+        log(`CORE request failed: ${error?.message ?? error}${cause}`);
         return {
           status: timedOut ? 504 : 502,
           body: JSON.stringify({
@@ -193,7 +213,7 @@ export function createHandler({
       return sendJson(res, 405, { error: 'Method not allowed.' }, { allow: 'GET' });
     }
     if (url.pathname === '/api/health') {
-      return sendJson(res, 200, { status: 'ok', keyConfigured: Boolean(key) });
+      return sendJson(res, 200, { status: 'ok', keyConfigured: Boolean(key), ...(keyProblem ? { keyProblem } : {}) });
     }
 
     const client = clientIp(req) || 'unknown';
