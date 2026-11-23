@@ -9,9 +9,13 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node server/dev.mjs",
     "build": "ng build",
-    "test": "ng test --watch=false"
+    "test": "ng test --watch=false",
+    "start:client": "ng serve",
+    "start:server": "node server/index.mjs",
+    "serve:prod": "NODE_ENV=production node server/index.mjs",
+    "test:server": "node --test \"server/**/*.test.mjs\""
   },
   "dependencies": {
     "@angular/common": "^22.3.0",
