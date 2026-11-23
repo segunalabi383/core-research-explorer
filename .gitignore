@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out-tsc/
+.angular/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
