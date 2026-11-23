@@ -7,6 +7,7 @@ import { PaperCard } from './components/paper-card';
 import { PaperSkeleton } from './components/paper-skeleton';
 import { ReadingListPanel } from './components/reading-list-panel';
 import { SearchPanel } from './components/search-panel';
+import { YearChart } from './components/year-chart';
 import { downloadText, exportFilename, papersToCsv } from './core/export';
 import { SearchStore } from './core/search.store';
 
@@ -14,7 +15,7 @@ const BASE_TITLE = 'CORE Research Explorer';
 
 @Component({
   selector: 'app-root',
-  imports: [AppHeader, SearchPanel, PaperCard, PaperSkeleton, Pager, ReadingListPanel, DecimalPipe],
+  imports: [AppHeader, SearchPanel, PaperCard, PaperSkeleton, Pager, YearChart, ReadingListPanel, DecimalPipe],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

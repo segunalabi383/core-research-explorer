@@ -23,13 +23,14 @@
       </div>
       <ul class="features">
         <li><strong>Boolean search</strong><span>Brackets, phrases, field filters, checked as you type.</span></li>
+        <li><strong>Year chart</strong><span>Counts every match, not just one page. Click a bar to filter.</span></li>
         <li><strong>Reading list</strong><span>Save papers and export them as BibTeX or CSV.</span></li>
         <li><strong>Shareable</strong><span>Every search has its own link. Back and Forward just work.</span></li>
       </ul>
       <p class="tip">Tip: press <kbd>/</kbd> anywhere to jump to the search box.</p>
     </section>
   } @else {
-    <div class="layout" style="grid-template-columns: minmax(0, 860px); justify-content: center">
+    <div class="layout">
       <section class="results" id="results" aria-labelledby="results-heading" #resultsTop>
         <div class="toolbar">
           <h2 id="results-heading" aria-live="polite">
@@ -95,6 +96,18 @@
         }
       </section>
 
+      <aside class="side">
+        <app-year-chart
+          [summary]="store.years.hasValue() ? store.years.value() : undefined"
+          [loading]="store.years.isLoading()"
+          [error]="store.yearsError()"
+          [total]="store.totalForQuery()"
+          [selectedYear]="store.year()"
+          [canFilter]="store.canFilterByYear()"
+          (selectYear)="store.setYear($event)"
+          (retry)="store.retryYears()"
+        />
+      </aside>
     </div>
   }
 </main>
