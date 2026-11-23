@@ -10,12 +10,14 @@
   "scripts": {
     "ng": "ng",
     "start": "node server/dev.mjs",
-    "build": "ng build",
-    "test": "ng test --watch=false",
     "start:client": "ng serve",
     "start:server": "node server/index.mjs",
+    "build": "ng build",
     "serve:prod": "NODE_ENV=production node server/index.mjs",
-    "test:server": "node --test \"server/**/*.test.mjs\""
+    "test": "ng test --watch=false",
+    "test:server": "node --test \"server/**/*.test.mjs\"",
+    "test:all": "npm run test && npm run test:server",
+    "verify": "npm run test:all && npm run build"
   },
   "dependencies": {
     "@angular/common": "^22.3.0",
