@@ -114,6 +114,8 @@ export function createHandler({
   timeoutMs = 15_000,
   staticDir = null,
   rateLimit = { max: 60, windowMs: 60_000 },
+  /** Who the rate limit counts against. Behind a trusted proxy, pass a function that reads its header. */
+  clientIp = (req) => req.socket?.remoteAddress,
   now = Date.now,
   log = () => {},
 } = {}) {
@@ -194,7 +196,7 @@ export function createHandler({
       return sendJson(res, 200, { status: 'ok', keyConfigured: Boolean(key) });
     }
 
-    const client = req.socket.remoteAddress ?? 'unknown';
+    const client = clientIp(req) || 'unknown';
     const gate = limiter(client);
     if (!gate.allowed) {
       return sendJson(
